@@ -191,8 +191,6 @@ rm(Hnfass, politics, ysrent, financial_w1, financial_w2, financial_w5, NL, ES)
 
 save.image("regression_data.RData")
 
-## Account only for retirees
-
 
 ## Run regressions 
 
@@ -218,14 +216,14 @@ for(i in 1:nrow(spain)){
                 spain$clust4[i] <- 0
         }
         if(spain$cluster[i] == 5){
-                spain$clust5[i] <- 1
-        } else{
-                spain$clust5[i] <- 0
-        }
-        if(spain$cluster[i] == 6){
                 spain$clust6[i] <- 1
         } else{
                 spain$clust6[i] <- 0
+        }
+        if(spain$cluster[i] == 6){
+                spain$clust5[i] <- 1
+        } else{
+                spain$clust5[i] <- 0
         }
         if(spain$cluster[i] == 7){
                 spain$clust7[i] <- 1
@@ -272,14 +270,14 @@ for(i in 1:nrow(netherlands)){
                 netherlands$clust4[i] <- 0
         }
         if(netherlands$cluster[i] == 5){
-                netherlands$clust5[i] <- 1
-        } else{
-                netherlands$clust5[i] <- 0
-        }
-        if(netherlands$cluster[i] == 6){
                 netherlands$clust6[i] <- 1
         } else{
                 netherlands$clust6[i] <- 0
+        }
+        if(netherlands$cluster[i] == 6){
+                netherlands$clust5[i] <- 1
+        } else{
+                netherlands$clust5[i] <- 0
         }
         if(netherlands$cluster[i] == 7){
                 netherlands$clust7[i] <- 1
@@ -303,25 +301,19 @@ for(i in 1:nrow(netherlands)){
         }
 }
 
+
 attach(netherlands)
 attach(spain)
 library(car)
 
-ret <- read.dta(("Data/Wave2/sharew2_rel6-0-0_ep.dta"))
-ret <- select(ret, mergeid, ep005_)
-ret_ES <- subset(ret, startsWith(ret$mergeid, "ES"))
-ret_NL <- subset(ret, startsWith(ret$mergeid, "NL"))
-ret_ES <- subset(ret_ES, ret_ES$ep005_ != "Employed or self-employed (including working for family business)")
-ret_NL <- subset(ret_NL, ret_NL$ep005_ != "Employed or self-employed (including working for family business)")
-spain <- merge(spain, ret_ES, by = "mergeid", all.x = T)
-netherlands <- merge(netherlands, ret_NL, by = "mergeid", all.x = T)
+
 
 ## set category base for the dummy trap
 spain$male_base <- 0
 spain$clust2_base <- 0
 netherlands$male_base <- 0
 netherlands$clust2_base <- 0
-rm(ret, ret_ES, ret_NL)
+
 
 totpension_es <- lm((public+private+occupational) ~
                          (female + male_base
@@ -407,6 +399,20 @@ hh_nl <- lm((Hnfass + hrass) ~
             data = na.omit(netherlands))
 summary(hh_nl)
 
+hhinc_es <- lm((public+private+occupational+yaohm) ~
+                    (female + male_base
+                     + clust1 + clust2_base + clust3 + clust4 + clust5 + clust6 + clust7 + clust8
+                     + politics + yedu + sbus + yedu_p),
+            data = na.omit(spain))
+summary(hhinc_es)
+
+hhinc_nl <- lm((public+private+occupational+yaohm) ~
+                       (female + male_base
+                        + clust1 + clust2_base + clust3 + clust4 + clust5 + clust6 + clust7 + clust8
+                        + politics + yedu + sbus + yedu_p),
+               data = na.omit(netherlands))
+summary(hhinc_nl)
+
 other_es <- lm((ysrent + ybabsmf) ~
                        (female + male_base
                         + clust1 + clust2_base + clust3 + clust4 + clust5 + clust6 + clust7 + clust8
@@ -421,19 +427,23 @@ other_nl <- lm((ysrent+ ybabsmf) ~
                data = na.omit(netherlands))
 summary(other_nl)
 
-hhinc_es <- lm((public+private+occupational+yaohm) ~
-                    (female + male_base
-                     + clust1 + clust2_base + clust3 + clust4 + clust5 + clust6 + clust7 + clust8
-                     + politics + yedu + sbus + yedu_p),
-            data = na.omit(spain))
-summary(hhinc_es)
+inter_es <- lm((public+private+occupational) ~
+                            (female + male_base
+                             + clust1 + clust2_base + clust3 + clust4 + clust5 + clust6 + clust7 + clust8
+                             + (clust1*female) + (clust2_base*male_base) + (clust3*female) +
+                                (clust4*female) + (clust5*female) + (clust6*female)+
+                                     (clust7*female)+ (clust8*female)),
+                    data = na.omit(spain))
+summary(inter_es)
 
-hhinc_nl <- lm((public+private+occupational+yaohm) ~
+inter_nl <- lm((public+private+occupational) ~
                        (female + male_base
                         + clust1 + clust2_base + clust3 + clust4 + clust5 + clust6 + clust7 + clust8
-                        + politics + yedu + sbus + yedu_p),
+                        + (clust1*female) + (clust2_base*male_base) + (clust3*female) +
+                                (clust4*female) + (clust5*female) + (clust6*female)+
+                                (clust7*female)+ (clust8*female)),
                data = na.omit(netherlands))
-summary(hhinc_nl)
+summary(inter_nl)
 
 
 
